@@ -15,7 +15,7 @@
 //   node <brain-page-skill>/bin/brain.mjs <subcommand> [flags]
 //
 // Subcommands:
-//   root                            (print the resolved brain dir + its source)
+//   root                            (print the resolved brain dir, its source, and whether it exists/is populated)
 //   ls                              (list pages: id / title / category / status)
 //   cat <id>                        (print brain/pages/<id>.md)
 //   show <slug>                     (print a root page brain/<slug>.md)
@@ -41,6 +41,7 @@ import {
   PAGE_STATUSES,
   TIMELINE_KINDS,
   listPages,
+  listRootPages,
   loadDoc,
   pagePath,
   rootPagePath,
@@ -318,8 +319,14 @@ function cmdRoot() {
   const origin = BRAIN_DIR_SOURCE === "brainRoot"
     ? "from brainRoot in ./.mindmux/preferences.json"
     : "default ./brain";
+  // "populated" means the resolved location already holds real brain content —
+  // any root page or any page under pages/. An empty/absent directory is not.
+  const populated = listRootPages().length > 0 || listPages().length > 0;
   console.log(BRAIN_DIR);
   console.log(`(${origin})`);
+  console.log(`source: ${BRAIN_DIR_SOURCE}`);
+  console.log(`exists: ${existsSync(BRAIN_DIR)}`);
+  console.log(`populated: ${populated}`);
 }
 
 function cmdLs() {
@@ -462,7 +469,7 @@ when present, otherwise ./brain. ALL reads and writes go through this CLI —
 NEVER hand-edit any file under the brain directory.
 
 Reads (location-independent):
-  root            print the resolved brain dir + its source
+  root            print the resolved brain dir, its source, and exists/populated
   ls              list pages (id / title / category / status)
   cat <id>        print brain/pages/<id>.md
   show <slug>     print a root page brain/<slug>.md

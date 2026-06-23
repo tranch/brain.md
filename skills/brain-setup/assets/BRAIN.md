@@ -46,7 +46,7 @@ Resolve `<brain-page-skill-bundle>` to wherever the brain-page skill is installe
 1. If `./.mindmux/preferences.json` exists and has a `brainRoot` field, that path is the brain root (it contains `pages/` and the six root pages). It may be absolute (e.g. a MindMux-managed sidecar like `/Users/me/Work/myproject-brain`) or relative to the project root.
 2. Otherwise the brain is `./brain`.
 
-A missing file, broken JSON, or absent `brainRoot` all fall back silently to `./brain`. Run `brain root` to see the resolved directory and which rule produced it.
+A missing file, broken JSON, or absent `brainRoot` all fall back silently to `./brain`. Run `brain root` to see the resolved directory, which rule produced it (`source:`), and whether that location already exists and is `populated:`. There is **exactly one brain, at the resolved location** — tools never create a second local `./brain` when `brainRoot` redirects elsewhere.
 
 ---
 
@@ -124,7 +124,7 @@ Use `[[page-id]]` only when the identifier truly is the id of a brain page (it a
 
 Skills are reusable operating manuals for working with `brain/`. They are not knowledge deliverables; they are "how to do it" rulebooks for the AI, installed into each agent's global skills directory (so Claude Code, Codex, and others share them). This standard ships four:
 
-- **brain-setup** — detect whether a project has a `BRAIN.md`; if not, scaffold `BRAIN.md` + the `brain/` skeleton, wire the chosen agents' config files via `brain wire` (see below), and optionally install a pre-commit hook.
+- **brain-setup** — ensure `BRAIN.md` is in the project root; resolve the brain data location with `brain root` (brainRoot-aware) and scaffold the `brain/` skeleton there only if that location is empty — never a second local `./brain` when `brainRoot` redirects to an external directory. Then wire the chosen agents' config files via `brain wire` (see below), and optionally install a pre-commit hook.
 - **brain-bootstrap** — seed a freshly-scaffolded brain with real project knowledge: on an existing project, read the code / docs / `git log` to draft the six root pages and capture key decisions; on an empty project, interview the user. All writes go through the `brain` CLI. Run it after **brain-setup**.
 - **brain-page** — the operating manual for reading and writing pages + root pages; this is the bundle that carries the `brain` CLI. **Read it before creating or modifying any page.**
 - **brain-ingest** — the process for digesting a conversation / document / research result and writing it down through the `brain` CLI.

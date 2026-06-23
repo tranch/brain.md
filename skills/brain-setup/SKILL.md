@@ -1,6 +1,6 @@
 ---
 name: brain-setup
-description: Bootstrap the Open Project Brain Standard into the current project — detect whether it already has a BRAIN.md; if not, scaffold BRAIN.md + the brain/ skeleton, idempotently wire CLAUDE.md / AGENTS.md, and optionally install a pre-commit hook.
+description: Bootstrap the Open Project Brain Standard into the current project — ensure BRAIN.md is in the project root, resolve the brain data location with `brain root` (brainRoot-aware), scaffold the brain/ skeleton there only if it is empty (never a second local ./brain when redirected), idempotently wire CLAUDE.md / AGENTS.md, and optionally install a pre-commit hook.
 ---
 
 # brain-setup
@@ -11,29 +11,44 @@ This skill bootstraps a project into the **Open Project Brain Standard**: it dro
 
 Run this from the **target project's root**. The skill bundle ships the templates under `assets/` and the hook under `hooks/`; resolve `<this-skill-bundle>` to the directory this `SKILL.md` lives in.
 
+> **Core invariant: there is exactly one brain, at the resolved location.** The brain's data directory is **location-independent** — it lives at `./brain` by default, but a MindMux-managed project redirects it via `brainRoot` in `./.mindmux/preferences.json` (often an absolute path to an external sidecar directory). This skill MUST resolve that location before scaffolding, and MUST NOT create a second, local `./brain` when a `brainRoot` is set — doing so produces a **split brain** (an empty local skeleton shadowing the real external brain). The `BRAIN.md` protocol document is separate: it always lives in the project root regardless of where the brain data lives.
+
 ## Steps
 
-### 1. Detect existing setup
+### 1. Ensure `BRAIN.md` (the protocol document) is in the project root
 
-Check the project root for `BRAIN.md`.
+`BRAIN.md` is the read/write contract that the agent reads to learn how to use the brain. It **always** belongs in the **project root**, independent of where the brain *data* lives.
 
-- **Present** → the project is already initialized. Do not overwrite it. Skip to step 4 (verify the wiring is in place) and stop.
-- **Absent** → continue with the scaffold below.
+- **Present** → leave it untouched (never overwrite project content).
+- **Absent** → copy `assets/BRAIN.md` → `./BRAIN.md`.
 
-### 2. Scaffold `BRAIN.md` + the `brain/` skeleton
+Do **not** stop here just because `BRAIN.md` exists — its presence says nothing about whether the brain data is set up. Always continue to step 2 to resolve and check the data location.
 
-Copy from the bundle into the project root, without clobbering anything that already exists:
+### 2. Resolve the brain data location, then scaffold there only if empty
 
-- `assets/BRAIN.md` → `./BRAIN.md`
-- `assets/brain/` → `./brain/` — this brings the six root page templates (`background` / `architecture` / `flow` / `mindmap` / `stack` / `roadmap`), a generated `index.md`, and an empty `pages/` directory. No example pages are scaffolded; the page format is documented in `BRAIN.md` and the **brain-page** skill.
-
-For each destination file: copy it **only if it does not already exist** (never overwrite project content). After copying, run the CLI's `reindex` so `brain/index.md` reflects whatever pages are present:
+First, resolve where the brain data actually lives — never assume `./brain`. Ask the CLI:
 
 ```
-node <brain-page-bundle>/bin/brain.mjs reindex
+node <brain-page-bundle>/bin/brain.mjs root
 ```
 
 (The brain-page skill carries the CLI; in the brain.md source repo it is `skills/brain-page/bin/brain.mjs`, globally it is e.g. `~/.claude/skills/brain-page/bin/brain.mjs`.)
+
+`brain root` reads `brainRoot` from `./.mindmux/preferences.json` when present (otherwise falls back to `./brain`) and prints, on separate lines: the **resolved directory**, a human-readable origin, `source:` (`brainRoot` or `default`), `exists:` (`true`/`false`), and `populated:` (`true`/`false` — whether the location already holds a root page or any page under `pages/`). Read those lines instead of guessing or `stat`-ing by hand.
+
+Branch on the resolved state:
+
+- **`populated: true` → the brain already exists. Do NOT scaffold.** Tell the user the brain lives at `<resolved dir>`. If `source: brainRoot`, make it explicit: *"this project's brain is redirected to an external directory (`<resolved dir>`) and is managed there — leaving it untouched."* Then continue to step 3 (wire) and step 4 (optional hook). Never lay down a local `./brain` in this case.
+
+- **`populated: false` → scaffold the skeleton into the resolved directory** (the `brainRoot` target when redirected, otherwise `./brain`). Copy `assets/brain/` → `<resolved dir>/` — this brings the six root page templates (`background` / `architecture` / `flow` / `mindmap` / `stack` / `roadmap`), a generated `index.md`, and an empty `pages/` directory. Copy each destination file **only if it does not already exist** (never overwrite). **Never create a second local `./brain` when `source: brainRoot`** — always scaffold at the resolved path. After copying, run `reindex` so the index reflects the present pages:
+
+  ```
+  node <brain-page-bundle>/bin/brain.mjs reindex
+  ```
+
+  (`reindex` resolves the same location, so it writes the index in the right place automatically.)
+
+No example pages are scaffolded; the page format is documented in `BRAIN.md` and the **brain-page** skill.
 
 ### 3. Wire the agent-config files via `brain wire`
 
