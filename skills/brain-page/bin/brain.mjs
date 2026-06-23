@@ -378,21 +378,20 @@ const WIRE_END = "<!-- END brain.md -->";
 // The unified, neutral, self-contained brain block. Both agents get byte-for-byte
 // the same body; the ONLY difference is that claude-code additionally carries an
 // `@import ./BRAIN.md` line (an @import is Claude Code-specific syntax — Codex,
-// which reads AGENTS.md, does not understand it, so its block uses the plain
-// "open and read ./BRAIN.md" instruction instead).
+// which reads AGENTS.md, does not understand it, so its block relies on the plain
+// "read ./BRAIN.md" instruction instead).
 function brainWireBlock(agent) {
   const lines = [
-    "## Project Brain (Open Project Brain Standard)",
+    "## Project Brain",
     "",
-    "This project follows the **Open Project Brain Standard**. The `brain/` directory is **this project's memory layer** — its durable decisions, requirements, and constraints. Open and read `./BRAIN.md` first — it is the complete, self-contained read/write contract for the brain.",
+    "This project keeps a **Project Brain**: a persistent memory layer of its durable decisions, requirements, and constraints. Read `./BRAIN.md` for the full read/write contract.",
     "",
-    "**Load context before you start.** Before any task or discussion, run `brain list-pages`, then `brain read-page <id>` / `brain read-root <slug>` to load the relevant existing decisions and constraints.",
+    "Use it actively:",
+    "- Before any task or discussion, load the relevant brain context with the `brain` CLI's read commands.",
+    "- Whenever a decision, requirement, constraint, or durable insight surfaces — in discussion or in code — record it with the `brain` CLI before moving on; don't wait to be asked.",
+    "- All reads and writes go through the `brain` CLI — never hand-edit brain files.",
     "",
-    "**Capture as you go.** The moment a decision, requirement, constraint, or durable conclusion surfaces — while discussing or while writing code — record it through the `brain` CLI (a decision page, or a root-page update) before moving on. Don't wait to be asked.",
-    "",
-    "Core rule: **all brain reads and writes go through the `brain` CLI** — never hand-edit any file under the brain directory.",
-    "",
-    "The brain skills — `brain-setup`, `brain-bootstrap`, `brain-page`, `brain-ingest` — are installed in your global skills directory.",
+    "The brain skills (`brain-setup`, `brain-page`, `brain-ingest`, `brain-bootstrap`) are installed in your global skills directory.",
   ];
   // claude-code only: the @import line trails the read instruction. Removing this
   // single line yields a body identical to the codex block.
