@@ -76,7 +76,7 @@ print_logo
 
 # Candidate agent runtimes: "<label>:<parent-config-dir>:<skills-dir>". A runtime
 # counts as detected only when its parent config dir exists.
-CANDIDATES="Claude:$HOME/.claude:$HOME/.claude/skills Codex:$HOME/.codex:$HOME/.codex/skills"
+CANDIDATES="Claude:$HOME/.claude:$HOME/.claude/skills Codex:$HOME/.codex:$HOME/.codex/skills OpenCode:$HOME/.config/opencode:$HOME/.config/opencode/skills"
 
 DETECTED=""
 echo "Detecting supported runtimes:"
